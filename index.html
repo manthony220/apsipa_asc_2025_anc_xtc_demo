@@ -3,54 +3,100 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Play Audio</title>
+  <title>Play Multiple Audio Files</title>
   <style>
-    body { font-family: system-ui, sans-serif; padding: 2rem; }
-    button { font-size: 1rem; padding: .75rem 1rem; border: 1px solid #ccc; border-radius: .5rem; cursor: pointer; }
-    button[aria-pressed="true"] { outline: 2px solid; }
+    body {
+      font-family: system-ui, sans-serif;
+      padding: 2rem;
+      text-align: center;
+    }
+    h1 {
+      margin-bottom: 2rem;
+    }
+    .audio-box {
+      margin: 1rem 0;
+    }
+    button {
+      font-size: 1rem;
+      padding: 0.75rem 1.25rem;
+      border: 1px solid #ccc;
+      border-radius: 0.5rem;
+      cursor: pointer;
+    }
+    button[aria-pressed="true"] {
+      outline: 2px solid #007acc;
+    }
   </style>
 </head>
 <body>
-  <h1>Play sound</h1>
 
-  <!-- Hidden audio element (can also show controls if you want) -->
-  <audio id="beep" preload="auto" src="./sound.mp3"></audio>
+  <h1>Audio Playback Demo</h1>
 
-  <button id="playBtn" aria-pressed="false" aria-label="Play sound">▶︎ Play</button>
+  <div class="audio-box">
+    <h3>ANC off XTC off</h3>
+    <audio id="audio1" preload="auto" src="./ancOFF.wav"></audio>
+    <button data-audio="audio1">▶ Play</button>
+  </div>
+
+  <div class="audio-box">
+    <h3>ANC ON XTC off</h3>
+    <audio id="audio2" preload="auto" src="./unprocessed.wav"></audio>
+    <button data-audio="audio2">▶ Play</button>
+  </div>
+
+  <div class="audio-box">
+    <h3>ANC ON XTC ON</h3>
+    <audio id="audio3" preload="auto" src="./processed.wav"></audio>
+    <button data-audio="audio3">▶ Play</button>
+  </div>
 
   <script>
-    const audio = document.getElementById('beep');
-    const btn = document.getElementById('playBtn');
+    // Handle multiple audio players
+    const buttons = document.querySelectorAll('button');
+    const audios = document.querySelectorAll('audio');
 
-    // Optional: handle iOS unlock on first user gesture
-    let unlocked = false;
-    const unlock = () => { if (!unlocked) { audio.play().then(() => { audio.pause(); audio.currentTime = 0; unlocked = true; }); } };
-    document.addEventListener('touchstart', unlock, { once: true });
-    document.addEventListener('click', unlock, { once: true });
+    buttons.forEach(button => {
+      const audio = document.getElementById(button.dataset.audio);
 
-    btn.addEventListener('click', async () => {
-      try {
+      button.addEventListener('click', async () => {
+        // Pause all other audios before playing this one
+        audios.forEach(a => {
+          if (a !== audio) {
+            a.pause();
+            a.currentTime = 0;
+            const otherBtn = document.querySelector(`button[data-audio="${a.id}"]`);
+            if (otherBtn) {
+              otherBtn.textContent = '▶ Play';
+              otherBtn.setAttribute('aria-pressed', 'false');
+            }
+          }
+        });
+
+        // Play or pause the selected audio
         if (audio.paused) {
-          await audio.play();
-          btn.textContent = '⏸︎ Pause';
-          btn.setAttribute('aria-pressed', 'true');
+          try {
+            await audio.play();
+            button.textContent = '⏸ Pause';
+            button.setAttribute('aria-pressed', 'true');
+          } catch (err) {
+            alert('Unable to play audio. Check browser permissions or file path.');
+            console.error(err);
+          }
         } else {
           audio.pause();
-          btn.textContent = '▶︎ Play';
-          btn.setAttribute('aria-pressed', 'false');
+          button.textContent = '▶ Play';
+          button.setAttribute('aria-pressed', 'false');
         }
-      } catch (err) {
-        alert('Could not play audio (browser blocked or file missing).');
-        console.error(err);
-      }
-    });
+      });
 
-    // Reset button label when audio ends
-    audio.addEventListener('ended', () => {
-      btn.textContent = '▶︎ Play';
-      btn.setAttribute('aria-pressed', 'false');
-      audio.currentTime = 0;
+      // Reset button when audio ends
+      audio.addEventListener('ended', () => {
+        button.textContent = '▶ Play';
+        button.setAttribute('aria-pressed', 'false');
+        audio.currentTime = 0;
+      });
     });
   </script>
+
 </body>
 </html>
