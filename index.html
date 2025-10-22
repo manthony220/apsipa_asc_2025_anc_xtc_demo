@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Play Audio</title>
+  <style>
+    body { font-family: system-ui, sans-serif; padding: 2rem; }
+    button { font-size: 1rem; padding: .75rem 1rem; border: 1px solid #ccc; border-radius: .5rem; cursor: pointer; }
+    button[aria-pressed="true"] { outline: 2px solid; }
+  </style>
+</head>
+<body>
+  <h1>Play sound</h1>
+
+  <!-- Hidden audio element (can also show controls if you want) -->
+  <audio id="beep" preload="auto" src="./sound.mp3"></audio>
+
+  <button id="playBtn" aria-pressed="false" aria-label="Play sound">▶︎ Play</button>
+
+  <script>
+    const audio = document.getElementById('beep');
+    const btn = document.getElementById('playBtn');
+
+    // Optional: handle iOS unlock on first user gesture
+    let unlocked = false;
+    const unlock = () => { if (!unlocked) { audio.play().then(() => { audio.pause(); audio.currentTime = 0; unlocked = true; }); } };
+    document.addEventListener('touchstart', unlock, { once: true });
+    document.addEventListener('click', unlock, { once: true });
+
+    btn.addEventListener('click', async () => {
+      try {
+        if (audio.paused) {
+          await audio.play();
+          btn.textContent = '⏸︎ Pause';
+          btn.setAttribute('aria-pressed', 'true');
+        } else {
+          audio.pause();
+          btn.textContent = '▶︎ Play';
+          btn.setAttribute('aria-pressed', 'false');
+        }
+      } catch (err) {
+        alert('Could not play audio (browser blocked or file missing).');
+        console.error(err);
+      }
+    });
+
+    // Reset button label when audio ends
+    audio.addEventListener('ended', () => {
+      btn.textContent = '▶︎ Play';
+      btn.setAttribute('aria-pressed', 'false');
+      audio.currentTime = 0;
+    });
+  </script>
+</body>
+</html>
